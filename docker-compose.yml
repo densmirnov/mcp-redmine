@@ -1,3 +1,7 @@
+networks:
+  dokploy-network:
+    external: true
+    
 services:
   mcp-redmine:
     build: .
@@ -12,3 +16,5 @@ services:
       MCP_AUTH_METHOD: ${MCP_AUTH_METHOD:-}
       MCP_AUTH_TOKEN: ${MCP_AUTH_TOKEN:-}
       MCP_AUTH_HEADER: ${MCP_AUTH_HEADER:-}
+    networks:
+      - dokploy-network
