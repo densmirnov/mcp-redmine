@@ -126,6 +126,33 @@ class AuthenticatedFastMCP(FastMCP):
         server = uvicorn.Server(config)
         await server.serve()
 
+    def streamable_http_app(self):
+        from starlette.middleware.base import BaseHTTPMiddleware
+        from starlette.responses import PlainTextResponse
+
+        app = super().streamable_http_app()
+
+        if MCP_AUTH_METHOD and MCP_AUTH_TOKEN:
+            class _AuthMiddleware(BaseHTTPMiddleware):
+                async def dispatch(self, request, call_next):
+                    method = MCP_AUTH_METHOD.lower()
+                    if method == "bearer":
+                        auth_header = request.headers.get("authorization")
+                        if not auth_header or not auth_header.startswith("Bearer "):
+                            return PlainTextResponse("Unauthorized", status_code=401)
+                        token = auth_header.split(" ", 1)[1]
+                        if token != MCP_AUTH_TOKEN:
+                            return PlainTextResponse("Unauthorized", status_code=401)
+                    elif method == "header":
+                        header_value = request.headers.get(MCP_AUTH_HEADER)
+                        if header_value != MCP_AUTH_TOKEN:
+                            return PlainTextResponse("Unauthorized", status_code=401)
+                    return await call_next(request)
+
+            app.add_middleware(_AuthMiddleware)
+
+        return app
+
 
 # Tools
 mcp = AuthenticatedFastMCP("Redmine MCP server")
@@ -252,7 +279,7 @@ def main():
     # A different transport can be selected by setting MCP_TRANSPORT (e.g. 'stdio').
     transport = os.environ.get("MCP_TRANSPORT", "sse")
     port = int(os.environ.get("PORT", 8369))
-    if transport == "sse":
+    if transport in {"sse", "streamable-http"}:
         mcp.settings.host = "0.0.0.0"
         mcp.settings.port = port
     mcp.run(transport=transport)
