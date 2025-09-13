@@ -185,7 +185,14 @@ def redmine_download(attachment_id: int, save_path: str, filename: str = None) -
 
 def main():
     """Main entry point for the mcp-redmine package."""
-    mcp.run()
+    # Use HTTP (SSE) transport by default so the server is reachable over the network.
+    # A different transport can be selected by setting MCP_TRANSPORT (e.g. 'stdio').
+    transport = os.environ.get("MCP_TRANSPORT", "sse")
+    port = int(os.environ.get("PORT", 8369))
+    if transport == "sse":
+        mcp.run(transport=transport, host="0.0.0.0", port=port)
+    else:
+        mcp.run(transport=transport)
 
 if __name__ == "__main__":
     main()
