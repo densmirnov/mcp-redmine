@@ -69,8 +69,7 @@ def yd(obj):
 
 
 class AuthenticatedFastMCP(FastMCP):
-    async def run_sse_async(self, mount_path: str | None = None) -> None:
-        import uvicorn
+    def sse_app(self, mount_path: str | None = None):
         from starlette.middleware.base import BaseHTTPMiddleware
         from starlette.responses import PlainTextResponse
 
@@ -94,6 +93,13 @@ class AuthenticatedFastMCP(FastMCP):
                     return await call_next(request)
 
             app.add_middleware(_AuthMiddleware)
+
+        return app
+
+    async def run_sse_async(self, mount_path: str | None = None) -> None:
+        import uvicorn
+
+        app = self.sse_app(mount_path)
 
         config = uvicorn.Config(
             app,
@@ -130,6 +136,37 @@ class AuthenticatedFastMCP(FastMCP):
             app.add_middleware(_AuthMiddleware)
 
         return app
+
+    def sse_and_streamable_http_app(self, mount_path: str | None = None):
+        app = self.streamable_http_app()
+        sse_app = self.sse_app(mount_path)
+
+        # Merge routes
+        app.router.routes.extend(sse_app.routes)
+
+        # Merge middleware without duplicates
+        existing = {mw.cls for mw in app.user_middleware}
+        for mw in sse_app.user_middleware:
+            if mw.cls not in existing:
+                app.user_middleware.append(mw)
+                existing.add(mw.cls)
+        app.middleware_stack = app.build_middleware_stack()
+
+        return app
+
+    async def run_sse_and_streamable_http_async(self, mount_path: str | None = None) -> None:
+        import uvicorn
+
+        app = self.sse_and_streamable_http_app(mount_path)
+
+        config = uvicorn.Config(
+            app,
+            host=self.settings.host,
+            port=self.settings.port,
+            log_level=self.settings.log_level.lower(),
+        )
+        server = uvicorn.Server(config)
+        await server.serve()
 
 
 # Tools
@@ -253,14 +290,17 @@ def redmine_download(attachment_id: int, save_path: str, filename: str = None) -
 
 def main():
     """Main entry point for the mcp-redmine package."""
-    # Use HTTP (SSE) transport by default so the server is reachable over the network.
-    # A different transport can be selected by setting MCP_TRANSPORT (e.g. 'stdio').
-    transport = os.environ.get("MCP_TRANSPORT", "sse")
+    transport = os.environ.get("MCP_TRANSPORT", "both")
     port = int(os.environ.get("PORT", 8369))
-    if transport in {"sse", "streamable-http"}:
+    if transport in {"sse", "streamable-http", "both"}:
         mcp.settings.host = "0.0.0.0"
         mcp.settings.port = port
-    mcp.run(transport=transport)
+    if transport == "both":
+        import asyncio
+
+        asyncio.run(mcp.run_sse_and_streamable_http_async())
+    else:
+        mcp.run(transport=transport)
 
 if __name__ == "__main__":
     main()

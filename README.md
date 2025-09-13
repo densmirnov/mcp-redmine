@@ -50,16 +50,9 @@ REDMINE_API_KEY=your-api-key \
 uv run -m mcp_redmine.server main
 ```
 
-To use the HTTP Streamable transport instead of SSE, set `MCP_TRANSPORT=streamable-http`:
-
-```bash
-REDMINE_URL=https://your-redmine-instance.example.com \
-REDMINE_API_KEY=your-api-key \
-MCP_TRANSPORT=streamable-http \
-uv run -m mcp_redmine.server main
-```
-
-Then connect using an MCP client configured for HTTP Streamable at `http://localhost:8369/mcp`.
+The server exposes both Server-Sent Events at `/sse` and Streamable HTTP at `/mcp` by default.
+To restrict the server to a single transport, set `MCP_TRANSPORT=sse` or
+`MCP_TRANSPORT=streamable-http`.
 
 Add to your `claude_desktop_config.json`:
 ```json
@@ -86,7 +79,8 @@ cp .env.example .env
 edit .env
 ```
 
-To use the HTTP Streamable transport with Docker, add `MCP_TRANSPORT=streamable-http` to your `.env` file.
+By default the container supports both transports. To limit it to one, add
+`MCP_TRANSPORT=sse` or `MCP_TRANSPORT=streamable-http` to your `.env` file.
 
 Build and start the container:
 ```bash
@@ -110,7 +104,7 @@ The server will be available at `http://localhost:${PORT:-8369}`. Add to your `c
 - `REDMINE_API_KEY`: Your Redmine API key (required, see below for how to get it)
 - `REDMINE_REQUEST_INSTRUCTIONS`: Optional text with additional instructions for the `redmine_request` tool. ([example1](INSTRUCTIONS_EXAMPLE1.md) [example2](INSTRUCTIONS_EXAMPLE2.md))
 - `PORT`: Port for the HTTP server when using `sse` or `streamable-http` transport (default: 8369)
-- `MCP_TRANSPORT`: Transport protocol to use (`sse` by default; also supports `streamable-http` and `stdio`)
+- `MCP_TRANSPORT`: Transport protocol (`both` by default; also supports `sse`, `streamable-http`, and `stdio`)
 - `LOG_LEVEL`: Log level for server output (default: INFO)
 - `MCP_AUTH_METHOD`: Optional authentication method for clients connecting to this MCP server (`bearer` or `header`)
 - `MCP_AUTH_TOKEN`: Token value expected from clients when `MCP_AUTH_METHOD` is set
