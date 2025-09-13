@@ -1,4 +1,4 @@
-import os, yaml, pathlib
+import os, yaml, pathlib, base64
 from urllib.parse import urljoin
 
 import logging
@@ -17,9 +17,11 @@ with open(current_dir / 'redmine_openapi.yml') as f:
 # Constants from environment
 REDMINE_URL = os.environ["REDMINE_URL"]
 REDMINE_API_KEY = os.environ["REDMINE_API_KEY"]
-REDMINE_REQUEST_INSTRUCTIONS = (
-    os.environ.get("REDMINE_REQUEST_INSTRUCTIONS", "").replace("\\n", "\n")
-)
+_rri_b64 = os.environ.get("REDMINE_REQUEST_INSTRUCTIONS", "")
+try:
+    REDMINE_REQUEST_INSTRUCTIONS = base64.b64decode(_rri_b64).decode()
+except Exception:
+    REDMINE_REQUEST_INSTRUCTIONS = _rri_b64
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
 
 logging.basicConfig(
