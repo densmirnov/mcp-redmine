@@ -68,7 +68,7 @@ Ensure you have docker installed.
 docker --version
 ```
 
-Copy `.env.example` to `.env` and set your Redmine credentials (and optionally the port and request instructions):
+Copy `.env.example` to `.env` and set your Redmine credentials (and optionally the port, log level and request instructions):
 
 ```bash
 cp .env.example .env
@@ -97,10 +97,10 @@ The server will be available at `http://localhost:${PORT:-8369}`. Add to your `c
 - `REDMINE_API_KEY`: Your Redmine API key (required, see below for how to get it)
 - `REDMINE_REQUEST_INSTRUCTIONS`: Optional text with additional instructions for the `redmine_request` tool. ([example1](INSTRUCTIONS_EXAMPLE1.md) [example2](INSTRUCTIONS_EXAMPLE2.md))
 - `PORT`: Port for the HTTP server when using SSE transport (default: 8369)
+- `LOG_LEVEL`: Log level for server output (default: INFO)
 - `MCP_AUTH_METHOD`: Optional authentication method for clients connecting to this MCP server (`bearer` or `header`)
 - `MCP_AUTH_TOKEN`: Token value expected from clients when `MCP_AUTH_METHOD` is set
 - `MCP_AUTH_HEADER`: Header name to check when using `MCP_AUTH_METHOD=header` (default: `X-MCP-Auth`)
-
 
 ## Getting Your Redmine API Key
 
