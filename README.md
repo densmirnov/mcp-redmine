@@ -50,6 +50,17 @@ REDMINE_API_KEY=your-api-key \
 uv run -m mcp_redmine.server main
 ```
 
+To use the HTTP Streamable transport instead of SSE, set `MCP_TRANSPORT=streamable-http`:
+
+```bash
+REDMINE_URL=https://your-redmine-instance.example.com \
+REDMINE_API_KEY=your-api-key \
+MCP_TRANSPORT=streamable-http \
+uv run -m mcp_redmine.server main
+```
+
+Then connect using an MCP client configured for HTTP Streamable at `http://localhost:8369/mcp`.
+
 Add to your `claude_desktop_config.json`:
 ```json
   {
@@ -74,6 +85,8 @@ Copy `.env.example` to `.env` and set your Redmine credentials (and optionally t
 cp .env.example .env
 edit .env
 ```
+
+To use the HTTP Streamable transport with Docker, add `MCP_TRANSPORT=streamable-http` to your `.env` file.
 
 Build and start the container:
 ```bash
