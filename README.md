@@ -50,9 +50,7 @@ REDMINE_API_KEY=your-api-key \
 uv run -m mcp_redmine.server main
 ```
 
-The server exposes both Server-Sent Events at `/sse` and Streamable HTTP at `/mcp` by default.
-To restrict the server to a single transport, set `MCP_TRANSPORT=sse` or
-`MCP_TRANSPORT=streamable-http`.
+The server exposes Streamable HTTP at `/mcp`.
 
 Add to your `claude_desktop_config.json`:
 ```json
@@ -79,9 +77,6 @@ cp .env.example .env
 edit .env
 ```
 
-By default the container supports both transports. To limit it to one, add
-`MCP_TRANSPORT=sse` or `MCP_TRANSPORT=streamable-http` to your `.env` file.
-
 Build and start the container:
 ```bash
 docker compose up --build
@@ -103,8 +98,7 @@ The server will be available at `http://localhost:${PORT:-8369}`. Add to your `c
 - `REDMINE_URL`: URL of your Redmine instance (required)
 - `REDMINE_API_KEY`: Your Redmine API key (required, see below for how to get it)
 - `REDMINE_REQUEST_INSTRUCTIONS`: Optional text with additional instructions for the `redmine_request` tool. ([example1](INSTRUCTIONS_EXAMPLE1.md) [example2](INSTRUCTIONS_EXAMPLE2.md))
-- `PORT`: Port for the HTTP server when using `sse` or `streamable-http` transport (default: 8369)
-- `MCP_TRANSPORT`: Transport protocol (`both` by default; also supports `sse`, `streamable-http`, and `stdio`)
+- `PORT`: Port for the HTTP server (default: 8369)
 - `LOG_LEVEL`: Log level for server output (default: INFO)
 - `MCP_AUTH_METHOD`: Optional authentication method for clients connecting to this MCP server (`bearer` or `header`)
 - `MCP_AUTH_TOKEN`: Token value expected from clients when `MCP_AUTH_METHOD` is set
