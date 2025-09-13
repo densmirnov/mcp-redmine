@@ -19,6 +19,11 @@ REDMINE_URL = os.environ["REDMINE_URL"]
 REDMINE_API_KEY = os.environ["REDMINE_API_KEY"]
 REDMINE_REQUEST_INSTRUCTIONS = os.environ.get("REDMINE_REQUEST_INSTRUCTIONS", "")
 
+# Optional authentication for connecting to this MCP server
+MCP_AUTH_METHOD = os.environ.get("MCP_AUTH_METHOD")
+MCP_AUTH_TOKEN = os.environ.get("MCP_AUTH_TOKEN")
+MCP_AUTH_HEADER = os.environ.get("MCP_AUTH_HEADER", "X-MCP-Auth")
+
 
 # Core
 def request(path: str, method: str = 'get', data: dict = None, params: dict = None,
@@ -60,8 +65,67 @@ def yd(obj):
     return yaml.safe_dump(obj, allow_unicode=True, sort_keys=False, width=4096)
 
 
+class AuthenticatedFastMCP(FastMCP):
+    async def run_sse_async(self) -> None:
+        from starlette.applications import Starlette
+        from starlette.middleware import Middleware
+        from starlette.middleware.base import BaseHTTPMiddleware
+        from starlette.responses import PlainTextResponse
+        from starlette.routing import Mount, Route
+        import uvicorn
+        from mcp.transport.sse import SseServerTransport
+
+        sse = SseServerTransport("/messages/")
+
+        async def handle_sse(request):
+            async with sse.connect_sse(request.scope, request.receive, request._send) as streams:
+                await self._mcp_server.run(
+                    streams[0],
+                    streams[1],
+                    self._mcp_server.create_initialization_options(),
+                )
+
+        middleware = []
+        if MCP_AUTH_METHOD and MCP_AUTH_TOKEN:
+            class _AuthMiddleware(BaseHTTPMiddleware):
+                async def dispatch(self, request, call_next):
+                    method = MCP_AUTH_METHOD.lower()
+                    if method == "bearer":
+                        auth_header = request.headers.get("authorization")
+                        if not auth_header or not auth_header.startswith("Bearer "):
+                            return PlainTextResponse("Unauthorized", status_code=401)
+                        token = auth_header.split(" ", 1)[1]
+                        if token != MCP_AUTH_TOKEN:
+                            return PlainTextResponse("Unauthorized", status_code=401)
+                    elif method == "header":
+                        header_value = request.headers.get(MCP_AUTH_HEADER)
+                        if header_value != MCP_AUTH_TOKEN:
+                            return PlainTextResponse("Unauthorized", status_code=401)
+                    return await call_next(request)
+
+            middleware.append(Middleware(_AuthMiddleware))
+
+        starlette_app = Starlette(
+            debug=self.settings.debug,
+            routes=[
+                Route("/sse", endpoint=handle_sse),
+                Mount("/messages/", app=sse.handle_post_message),
+            ],
+            middleware=middleware,
+        )
+
+        config = uvicorn.Config(
+            starlette_app,
+            host=self.settings.host,
+            port=self.settings.port,
+            log_level=self.settings.log_level.lower(),
+        )
+        server = uvicorn.Server(config)
+        await server.serve()
+
+
 # Tools
-mcp = FastMCP("Redmine MCP server")
+mcp = AuthenticatedFastMCP("Redmine MCP server")
 get_logger(__name__).info(f"Starting MCP Redmine version {VERSION}")
 
 @mcp.tool(description="""
