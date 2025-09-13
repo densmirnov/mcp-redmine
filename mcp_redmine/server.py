@@ -69,26 +69,13 @@ def yd(obj):
 
 
 class AuthenticatedFastMCP(FastMCP):
-    async def run_sse_async(self) -> None:
-        from starlette.applications import Starlette
-        from starlette.middleware import Middleware
+    async def run_sse_async(self, mount_path: str | None = None) -> None:
+        import uvicorn
         from starlette.middleware.base import BaseHTTPMiddleware
         from starlette.responses import PlainTextResponse
-        from starlette.routing import Mount, Route
-        import uvicorn
-        from mcp.server.sse import SseServerTransport
 
-        sse = SseServerTransport("/messages/")
+        app = super().sse_app(mount_path)
 
-        async def handle_sse(request):
-            async with sse.connect_sse(request.scope, request.receive, request._send) as streams:
-                await self._mcp_server.run(
-                    streams[0],
-                    streams[1],
-                    self._mcp_server.create_initialization_options(),
-                )
-
-        middleware = []
         if MCP_AUTH_METHOD and MCP_AUTH_TOKEN:
             class _AuthMiddleware(BaseHTTPMiddleware):
                 async def dispatch(self, request, call_next):
@@ -106,19 +93,10 @@ class AuthenticatedFastMCP(FastMCP):
                             return PlainTextResponse("Unauthorized", status_code=401)
                     return await call_next(request)
 
-            middleware.append(Middleware(_AuthMiddleware))
-
-        starlette_app = Starlette(
-            debug=self.settings.debug,
-            routes=[
-                Route("/sse", endpoint=handle_sse),
-                Mount("/messages/", app=sse.handle_post_message),
-            ],
-            middleware=middleware,
-        )
+            app.add_middleware(_AuthMiddleware)
 
         config = uvicorn.Config(
-            starlette_app,
+            app,
             host=self.settings.host,
             port=self.settings.port,
             log_level=self.settings.log_level.lower(),
