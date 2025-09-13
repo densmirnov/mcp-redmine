@@ -3,7 +3,7 @@ from urllib.parse import urljoin
 
 import httpx
 from mcp.server.fastmcp import FastMCP
-from mcp.server.fastmcp.utilities.logging import get_logger
+from mcp.server.fastmcp.utilities.logging import get_logger, configure_logging
 
 ### Constants ###
 
@@ -18,6 +18,9 @@ with open(current_dir / 'redmine_openapi.yml') as f:
 REDMINE_URL = os.environ["REDMINE_URL"]
 REDMINE_API_KEY = os.environ["REDMINE_API_KEY"]
 REDMINE_REQUEST_INSTRUCTIONS = os.environ.get("REDMINE_REQUEST_INSTRUCTIONS", "")
+LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
+
+configure_logging(level=LOG_LEVEL)
 
 
 # Core

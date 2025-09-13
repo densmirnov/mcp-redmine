@@ -9,6 +9,7 @@ RUN pip install --upgrade pip \
     && uv sync
 
 ENV PORT=8369
+ENV LOG_LEVEL=INFO
 EXPOSE 8369
 
 CMD ["uv", "run", "--directory", "/app", "-m", "mcp_redmine.server", "main"]
