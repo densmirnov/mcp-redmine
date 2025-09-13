@@ -76,7 +76,7 @@ class AuthenticatedFastMCP(FastMCP):
         from starlette.responses import PlainTextResponse
         from starlette.routing import Mount, Route
         import uvicorn
-        from mcp.transport.sse import SseServerTransport
+        from mcp.server.sse import SseServerTransport
 
         sse = SseServerTransport("/messages/")
 
