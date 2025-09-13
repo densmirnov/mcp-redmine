@@ -1,9 +1,9 @@
 import os, yaml, pathlib
 from urllib.parse import urljoin
 
+import logging
 import httpx
 from mcp.server.fastmcp import FastMCP
-from mcp.server.fastmcp.utilities.logging import get_logger, configure_logging
 
 ### Constants ###
 
@@ -20,7 +20,11 @@ REDMINE_API_KEY = os.environ["REDMINE_API_KEY"]
 REDMINE_REQUEST_INSTRUCTIONS = os.environ.get("REDMINE_REQUEST_INSTRUCTIONS", "")
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
 
-configure_logging(level=LOG_LEVEL)
+logging.basicConfig(
+    level=getattr(logging, LOG_LEVEL, logging.INFO),
+    format="%(asctime)s | %(levelname)s | %(name)s | %(module)s:%(lineno)d | %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 # Optional authentication for connecting to this MCP server
 MCP_AUTH_METHOD = os.environ.get("MCP_AUTH_METHOD")
@@ -99,7 +103,7 @@ class AuthenticatedFastMCP(FastMCP):
 
 # Tools
 mcp = AuthenticatedFastMCP("Redmine MCP server")
-get_logger(__name__).info(f"Starting MCP Redmine version {VERSION}")
+logger.info(f"Starting MCP Redmine version {VERSION}")
 
 @mcp.tool(description="""
 Make a request to the Redmine API
