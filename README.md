@@ -68,7 +68,8 @@ Ensure you have docker installed.
 docker --version
 ```
 
-Copy `.env.example` to `.env` and set your Redmine credentials (and optionally the port and instructions file paths):
+Copy `.env.example` to `.env` and set your Redmine credentials (and optionally the port and request instructions):
+
 ```bash
 cp .env.example .env
 edit .env
@@ -94,12 +95,8 @@ The server will be available at `http://localhost:${PORT:-8369}`. Add to your `c
 
 - `REDMINE_URL`: URL of your Redmine instance (required)
 - `REDMINE_API_KEY`: Your Redmine API key (required, see below for how to get it)
-- `REDMINE_REQUEST_INSTRUCTIONS`: Path inside the container to a file containing additional instructions for the `redmine_request` tool (optional). I've found it works great to have the LLM generate that file after a session. ([example1](INSTRUCTIONS_EXAMPLE1.md) [example2](INSTRUCTIONS_EXAMPLE2.md))
-- `REDMINE_REQUEST_INSTRUCTIONS_FILE`: Path to an instructions file on the host when using Docker Compose (optional)
+- `REDMINE_REQUEST_INSTRUCTIONS`: Optional text with additional instructions for the `redmine_request` tool. ([example1](INSTRUCTIONS_EXAMPLE1.md) [example2](INSTRUCTIONS_EXAMPLE2.md))
 - `PORT`: Port for the HTTP server when using SSE transport (default: 8369)
-
-> **Note**: When running via Docker, `REDMINE_REQUEST_INSTRUCTIONS` should point to the **path inside the container** where the file is mounted.
-> Use `REDMINE_REQUEST_INSTRUCTIONS_FILE` to specify the file on the host that will be mounted there.
 
 
 ## Getting Your Redmine API Key
