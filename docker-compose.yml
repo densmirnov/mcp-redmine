@@ -1,0 +1,12 @@
+version: "3.8"
+
+services:
+  mcp-redmine:
+    build: .
+    ports:
+      - "${PORT:-8369}:${PORT:-8369}"
+    environment:
+      PORT: ${PORT:-8369}
+      REDMINE_URL: ${REDMINE_URL}
+      REDMINE_API_KEY: ${REDMINE_API_KEY}
+      REDMINE_REQUEST_INSTRUCTIONS: ${REDMINE_REQUEST_INSTRUCTIONS:-}

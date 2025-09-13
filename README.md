@@ -19,7 +19,7 @@ Uses httpx for API requests and integrates with the Redmine OpenAPI specificatio
 
 
 ## Usage with Claude Desktop
-### 1. Installation using `uv`
+### 1. Running locally using `uv`
 
 Ensure you have uv installed.
 ```bash
@@ -43,71 +43,59 @@ Install uv if you haven't already.
   powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
   ```
 
+Start the MCP server (ensure `REDMINE_URL` and `REDMINE_API_KEY` are set):
+```bash
+REDMINE_URL=https://your-redmine-instance.example.com \
+REDMINE_API_KEY=your-api-key \
+uv run -m mcp_redmine.server main
+```
+
 Add to your `claude_desktop_config.json`:
 ```json
   {
     "mcpServers": {
       "redmine": {
-        "command": "uvx",
-        "args": ["--from", "mcp-redmine==2025.09.03.141435", 
-                "--refresh-package", "mcp-redmine", "mcp-redmine"],
-        "env": {
-          "REDMINE_URL": "https://your-redmine-instance.example.com",
-          "REDMINE_API_KEY": "your-api-key",
-          "REDMINE_REQUEST_INSTRUCTIONS": "/path/to/instructions.md"
-        }
+        "url": "http://localhost:8369"
       }
     }
   }
 ```
 
-### 2. Installation using `docker`
+### 2. Running using `docker-compose`
 
-Ensure you have docker installed. 
+Ensure you have docker installed.
 ```bash
 docker --version
 ```
 
-Build docker image:
+Copy `.env.example` to `.env` and set your Redmine credentials (and optionally the port and request instructions):
 ```bash
-git clone git@github.com:runekaagaard/mcp-redmine.git
-cd mcp-redmine
-docker build -t mcp-redmine .
+cp .env.example .env
+edit .env
 ```
-Add to your `claude_desktop_config.json`:
-  ```json
+
+Build and start the container:
+```bash
+docker compose up --build
+```
+
+The server will be available at `http://localhost:${PORT:-8369}`. Add to your `claude_desktop_config.json`:
+```json
   {
     "mcpServers": {
       "redmine": {
-        "command": "docker",
-        "args":  [
-            "run",
-            "-i",
-            "--rm",
-            "-e", "REDMINE_URL",
-            "-e", "REDMINE_API_KEY",
-            "-e", "REDMINE_REQUEST_INSTRUCTIONS",
-            "-v", "/path/to/instructions.md:/app/INSTRUCTIONS.md",
-            "mcp-redmine"
-        ],
-        "env": {
-          "REDMINE_URL": "https://your-redmine-instance.example.com",
-          "REDMINE_API_KEY": "your-api-key",
-          "REDMINE_REQUEST_INSTRUCTIONS": "/app/INSTRUCTIONS.md"
-        }
+        "url": "http://localhost:8369"
       }
     }
   }
-  ```
+```
 
 ## Environment Variables
 
 - `REDMINE_URL`: URL of your Redmine instance (required)
 - `REDMINE_API_KEY`: Your Redmine API key (required, see below for how to get it)
-- `REDMINE_REQUEST_INSTRUCTIONS`: Path to a file containing additional instructions for the redmine_request tool (optional). I've found it works great to have the LLM generate that file after a session. ([example1](INSTRUCTIONS_EXAMPLE1.md) [example2](INSTRUCTIONS_EXAMPLE2.md))
-
-> **Note**: When running via Docker, the `REDMINE_REQUEST_INSTRUCTIONS` environment variable must point to a **path inside the container**, not a path on the host machine.  
-> Therefore, if you want to use a local file, you need to **mount it into the container** at the correct location.
+- `REDMINE_REQUEST_INSTRUCTIONS`: Optional text with additional instructions for the `redmine_request` tool. ([example1](INSTRUCTIONS_EXAMPLE1.md) [example2](INSTRUCTIONS_EXAMPLE2.md))
+- `PORT`: Port for the HTTP server when using SSE transport (default: 8369)
 
 
 ## Getting Your Redmine API Key

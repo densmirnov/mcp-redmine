@@ -15,13 +15,9 @@ with open(current_dir / 'redmine_openapi.yml') as f:
     SPEC = yaml.safe_load(f)
 
 # Constants from environment
-REDMINE_URL = os.environ['REDMINE_URL']
-REDMINE_API_KEY = os.environ['REDMINE_API_KEY']
-if "REDMINE_REQUEST_INSTRUCTIONS" in os.environ:
-    with open(os.environ["REDMINE_REQUEST_INSTRUCTIONS"]) as f:
-        REDMINE_REQUEST_INSTRUCTIONS = f.read()
-else:
-    REDMINE_REQUEST_INSTRUCTIONS = ""
+REDMINE_URL = os.environ["REDMINE_URL"]
+REDMINE_API_KEY = os.environ["REDMINE_API_KEY"]
+REDMINE_REQUEST_INSTRUCTIONS = os.environ.get("REDMINE_REQUEST_INSTRUCTIONS", "")
 
 
 # Core
@@ -185,7 +181,14 @@ def redmine_download(attachment_id: int, save_path: str, filename: str = None) -
 
 def main():
     """Main entry point for the mcp-redmine package."""
-    mcp.run()
+    # Use HTTP (SSE) transport by default so the server is reachable over the network.
+    # A different transport can be selected by setting MCP_TRANSPORT (e.g. 'stdio').
+    transport = os.environ.get("MCP_TRANSPORT", "sse")
+    port = int(os.environ.get("PORT", 8369))
+    if transport == "sse":
+        mcp.run(transport=transport, host="0.0.0.0", port=port)
+    else:
+        mcp.run(transport=transport)
 
 if __name__ == "__main__":
     main()
