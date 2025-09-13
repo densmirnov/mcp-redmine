@@ -69,6 +69,7 @@ docker --version
 ```
 
 Copy `.env.example` to `.env` and set your Redmine credentials (and optionally the port and request instructions):
+
 ```bash
 cp .env.example .env
 edit .env
