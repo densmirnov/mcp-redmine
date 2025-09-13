@@ -17,7 +17,9 @@ with open(current_dir / 'redmine_openapi.yml') as f:
 # Constants from environment
 REDMINE_URL = os.environ["REDMINE_URL"]
 REDMINE_API_KEY = os.environ["REDMINE_API_KEY"]
-REDMINE_REQUEST_INSTRUCTIONS = os.environ.get("REDMINE_REQUEST_INSTRUCTIONS", "")
+REDMINE_REQUEST_INSTRUCTIONS = (
+    os.environ.get("REDMINE_REQUEST_INSTRUCTIONS", "").replace("\\n", "\n")
+)
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
 
 logging.basicConfig(

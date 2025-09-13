@@ -97,7 +97,7 @@ The server will be available at `http://localhost:${PORT:-8369}`. Add to your `c
 
 - `REDMINE_URL`: URL of your Redmine instance (required)
 - `REDMINE_API_KEY`: Your Redmine API key (required, see below for how to get it)
-- `REDMINE_REQUEST_INSTRUCTIONS`: Optional text with additional instructions for the `redmine_request` tool. ([example1](INSTRUCTIONS_EXAMPLE1.md) [example2](INSTRUCTIONS_EXAMPLE2.md))
+- `REDMINE_REQUEST_INSTRUCTIONS`: Optional Markdown text with additional instructions for the `redmine_request` tool. Use `\n` for line breaks.
 - `PORT`: Port for the HTTP server (default: 8369)
 - `LOG_LEVEL`: Log level for server output (default: INFO). Logs include timestamp, logger name, and source line when set to INFO or higher.
 - `MCP_AUTH_METHOD`: Optional authentication method for clients connecting to this MCP server (`bearer` or `header`)
