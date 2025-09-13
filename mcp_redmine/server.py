@@ -69,26 +69,13 @@ def yd(obj):
 
 
 class AuthenticatedFastMCP(FastMCP):
-    async def run_sse_async(self) -> None:
-        from starlette.applications import Starlette
-        from starlette.middleware import Middleware
+    async def run_sse_async(self, mount_path: str | None = None) -> None:
+        import uvicorn
         from starlette.middleware.base import BaseHTTPMiddleware
         from starlette.responses import PlainTextResponse
-        from starlette.routing import Mount, Route
-        import uvicorn
-        from mcp.server.sse import SseServerTransport
 
-        sse = SseServerTransport("/messages/")
+        app = super().sse_app(mount_path)
 
-        async def handle_sse(request):
-            async with sse.connect_sse(request.scope, request.receive, request._send) as streams:
-                await self._mcp_server.run(
-                    streams[0],
-                    streams[1],
-                    self._mcp_server.create_initialization_options(),
-                )
-
-        middleware = []
         if MCP_AUTH_METHOD and MCP_AUTH_TOKEN:
             class _AuthMiddleware(BaseHTTPMiddleware):
                 async def dispatch(self, request, call_next):
@@ -106,25 +93,43 @@ class AuthenticatedFastMCP(FastMCP):
                             return PlainTextResponse("Unauthorized", status_code=401)
                     return await call_next(request)
 
-            middleware.append(Middleware(_AuthMiddleware))
-
-        starlette_app = Starlette(
-            debug=self.settings.debug,
-            routes=[
-                Route("/sse", endpoint=handle_sse),
-                Mount("/messages/", app=sse.handle_post_message),
-            ],
-            middleware=middleware,
-        )
+            app.add_middleware(_AuthMiddleware)
 
         config = uvicorn.Config(
-            starlette_app,
+            app,
             host=self.settings.host,
             port=self.settings.port,
             log_level=self.settings.log_level.lower(),
         )
         server = uvicorn.Server(config)
         await server.serve()
+
+    def streamable_http_app(self):
+        from starlette.middleware.base import BaseHTTPMiddleware
+        from starlette.responses import PlainTextResponse
+
+        app = super().streamable_http_app()
+
+        if MCP_AUTH_METHOD and MCP_AUTH_TOKEN:
+            class _AuthMiddleware(BaseHTTPMiddleware):
+                async def dispatch(self, request, call_next):
+                    method = MCP_AUTH_METHOD.lower()
+                    if method == "bearer":
+                        auth_header = request.headers.get("authorization")
+                        if not auth_header or not auth_header.startswith("Bearer "):
+                            return PlainTextResponse("Unauthorized", status_code=401)
+                        token = auth_header.split(" ", 1)[1]
+                        if token != MCP_AUTH_TOKEN:
+                            return PlainTextResponse("Unauthorized", status_code=401)
+                    elif method == "header":
+                        header_value = request.headers.get(MCP_AUTH_HEADER)
+                        if header_value != MCP_AUTH_TOKEN:
+                            return PlainTextResponse("Unauthorized", status_code=401)
+                    return await call_next(request)
+
+            app.add_middleware(_AuthMiddleware)
+
+        return app
 
 
 # Tools
@@ -252,7 +257,7 @@ def main():
     # A different transport can be selected by setting MCP_TRANSPORT (e.g. 'stdio').
     transport = os.environ.get("MCP_TRANSPORT", "sse")
     port = int(os.environ.get("PORT", 8369))
-    if transport == "sse":
+    if transport in {"sse", "streamable-http"}:
         mcp.settings.host = "0.0.0.0"
         mcp.settings.port = port
     mcp.run(transport=transport)
