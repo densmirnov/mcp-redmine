@@ -19,7 +19,19 @@ Uses httpx for API requests and integrates with the Redmine OpenAPI specificatio
 
 
 ## Usage with Claude Desktop
-### 1. Running locally using `uv`
+### 1. Running locally using the `mcp` CLI
+
+The official MCP CLI can start the server directly. Once your environment variables are in place you can run:
+
+```bash
+REDMINE_URL=https://your-redmine-instance.example.com \
+REDMINE_API_KEY=your-api-key \
+mcp dev mcp_redmine.server:create_server
+```
+
+This launches the server with the MCP Inspector so you can verify tool behaviour before connecting a client. To run without the inspector use `mcp run mcp_redmine.server:create_server`.
+
+### 2. Running locally using `uv`
 
 Ensure you have uv installed.
 ```bash
@@ -63,7 +75,7 @@ Add to your `claude_desktop_config.json`:
   }
 ```
 
-### 2. Running using `docker-compose`
+### 3. Running using `docker-compose`
 
 Ensure you have docker installed.
 ```bash
